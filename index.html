@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>下单</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-100 to-pink-100 min-h-screen">
+    <div x-data="bobaApp()" x-cloak class="container mx-auto px-4 py-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-purple-800">1001奶茶店欢迎您的光临</h1>
+        </header>
+
+        <main>
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">经典组合直接选</h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <template x-for="preset in presets" :key="preset.name">
+                        <button 
+                            @click="selectPreset(preset)"
+                            class="p-4 border rounded-lg text-center transition-colors duration-200 hover:bg-purple-100"
+                        >
+                            <i :class="preset.icon + ' text-2xl mb-2 text-purple-600'"></i>
+                            <span x-text="preset.name" class="block font-bold"></span>
+                            <span x-text="'$' + preset.price.toFixed(2)" class="text-sm text-gray-600"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">选择饮品基底</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <template x-for="drink in drinks" :key="drink.id">
+                        <button 
+                            @click="selectDrink(drink)"
+                            :class="{'bg-purple-200': selectedDrink?.id === drink.id}"
+                            class="p-4 border rounded-lg text-center transition-colors duration-200 hover:bg-purple-100"
+                        >
+                            <img :src="drink.image" :alt="drink.name" class="w-24 h-24 mx-auto mb-2 rounded-full object-cover">
+                            <span x-text="drink.name" class="block font-medium"></span>
+                            <span x-text="'$' + drink.price.toFixed(2)" class="text-sm text-gray-600"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <div x-show="selectedDrink" class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">定制你的饮品</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block mb-2 font-medium">甜度（100% = 5克糖/100ml，其他自己算）</label>
+                        <select x-model="sugarLevel" class="w-full p-2 border rounded">
+                            <option>0%</option>
+                            <option>25%</option>
+                            <option>50%</option>
+                            <option>75%</option>
+                            <option>100%</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-medium">冰度</label>
+                        <select x-model="iceLevel" class="w-full p-2 border rounded">
+                            <option>不加冰</option>
+                            <option>一块冰</option>
+                            <option>两块冰</option>
+                            <option>深井冰</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-2 font-medium">小料</label>
+                        <div class="space-y-2">
+                            <template x-for="topping in toppings" :key="topping.id">
+                                <label class="flex items-center">
+                                    <input type="checkbox" :value="topping.id" x-model="selectedToppings" class="mr-2">
+                                    <span x-text="topping.name + (topping.note || '') + ' (+$' + topping.price.toFixed(2) + ')'" class="text-sm"></span>
+                                </label>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div x-show="selectedDrink" class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
+                <div class="space-y-2">
+                    <p><span class="font-medium">饮品:</span> <span x-text="selectedDrink?.name"></span></p>
+                    <p><span class="font-medium">甜度:</span> <span x-text="sugarLevel"></span></p>
+                    <p><span class="font-medium">冰度:</span> <span x-text="iceLevel"></span></p>
+                    <p><span class="font-medium">小料:</span> 
+                        <!-- <span x-text="selectedToppings.length ? selectedToppings.map(idd => toppings.find(t => t.id === idd).name).join(', ') : 'None'"></span> -->
+                        <!-- <span x-text="toppings.find(t => t.id == selectedToppings[0]).name"></span> -->
+                        <!-- <span x-text="selectedToppings.map(id => toppings.find(t => t.id == id).name)"></span> -->
+                        <span x-text="selectedToppings.map(id => toppings.find(t => t.id == id).name).join('+') || ''"></span>
+                    </p>
+                    <p class="text-xl font-bold mt-4">总价: $<span x-text="totalPrice.toFixed(2)"></span></p>
+                </div>
+                <button 
+                    @click="placeOrder"
+                    class="mt-4 w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 transition-colors duration-200"
+                >
+                    下单
+                </button>
+            </div>
+        </main>
+    
+    
+        <div x-show="orderPlaced" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+
+
+            <div class="bg-white p-8 rounded-lg text-center">
+                <h2 class="text-2xl font-bold mb-4">下单成功！</h2>
+                <div class="space-y-2">
+                    <p><span class="font-medium">饮品:</span> <span x-text="selectedDrink?.name"></span></p>
+                    <p><span class="font-medium">甜度:</span> <span x-text="sugarLevel"></span></p>
+                    <p><span class="font-medium">冰度:</span> <span x-text="iceLevel"></span></p>
+                    <p><span class="font-medium">小料:</span> 
+                        <!-- <span x-text="selectedToppings.length ? selectedToppings.map(idd => toppings.find(t => t.id === idd).name).join(', ') : 'None'"></span> -->
+                        <!-- <span x-text="toppings.find(t => t.id == selectedToppings[0]).name"></span> -->
+                        <!-- <span x-text="selectedToppings.map(id => toppings.find(t => t.id == id).name)"></span> -->
+                        <span x-text="selectedToppings.map(id => toppings.find(t => t.id == id).name).join('+') || ''"></span>
+                    </p>
+                    <p>总价: $<span x-text="totalPrice.toFixed(2)"></span> （倒不用真的付钱）</p>
+                    <p>感谢您的下单！因为后端没做，请截图发给mbj</p>
+                </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
